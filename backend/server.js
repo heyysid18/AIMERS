@@ -8,7 +8,6 @@ require('dotenv').config();
 
 const app = express();
 
-
 // ============================
 // 1. Middleware
 // ============================
@@ -16,9 +15,31 @@ app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
+  exposedHeaders: ['Content-Length', 'Content-Range', 'Accept-Ranges']
 }));
 app.use(express.json());
+
+// ============================
+// Serve static files with correct MIME for .mjs files (PDF.js worker fix)
+// ============================
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.pdf')) {
+      res.set('Content-Type', 'application/pdf');
+      res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+      res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type');
+    }
+  }
+}));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.mjs')) {
+      res.set('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 // ============================
 // 2. Multer Dynamic File Upload Setup
@@ -37,11 +58,9 @@ const storage = multer.diskStorage({
   }
 });
 
-
 const upload = multer({ storage });
 
 // ✅ Dynamic Upload Route
-// Example: POST /api/upload/dpps/12th/mathematics
 app.post('/api/upload/:fileType/:className/:subject', upload.single('pdf'), (req, res) => {
   const { fileType, className, subject } = req.params;
 
@@ -61,39 +80,30 @@ app.post('/api/upload/:fileType/:className/:subject', upload.single('pdf'), (req
 // ✅ Video Topic Upload Route
 app.post('/api/upload/video', async (req, res) => {
   const { className, subject, topic, url } = req.body;
-  
+
   if (!className || !subject || !topic || !url) {
     return res.status(400).json({ error: 'All fields are required.' });
   }
-  
+
   try {
-    // Convert className to grade number (e.g., "10th" -> 10)
-    const grade = parseInt(className.replace('th', ''));
-    
-    // Find or create course
-    let course = await Course.findOne({ grade, subject });
-    
+    let course = await Course.findOne({ grade: parseInt(className.replace('th', '')), subject });
+
     if (!course) {
-      // Create new course if it doesn't exist
       course = new Course({
         title: `${subject} - Grade ${className}`,
-        grade,
+        grade: parseInt(className.replace('th', '')),
         subject,
         description: `${subject} course for Grade ${className}`,
         videoTopics: []
       });
     }
-    
-    // Add video topic to the course
-    if (!course.videoTopics) {
-      course.videoTopics = [];
-    }
-    
+
+    if (!course.videoTopics) course.videoTopics = [];
     course.videoTopics.push({ topic, url });
     await course.save();
-    
-    res.status(200).json({ 
-      success: true, 
+
+    res.status(200).json({
+      success: true,
       message: 'Video topic uploaded successfully.',
       data: { className, subject, topic, url }
     });
@@ -106,17 +116,17 @@ app.post('/api/upload/video', async (req, res) => {
 // ✅ Get Video Topics Route
 app.get('/api/videos/:grade/:subject', async (req, res) => {
   const { grade, subject } = req.params;
-  
+
   try {
-    const course = await Course.findOne({ 
-      grade: parseInt(grade), 
-      subject: subject.toLowerCase() 
+    const course = await Course.findOne({
+      grade: parseInt(grade),
+      subject: subject.toLowerCase()
     });
-    
+
     if (!course || !course.videoTopics) {
       return res.status(200).json({ videoTopics: [] });
     }
-    
+
     res.status(200).json({ videoTopics: course.videoTopics });
   } catch (err) {
     console.error('Error fetching video topics:', err);
@@ -127,18 +137,18 @@ app.get('/api/videos/:grade/:subject', async (req, res) => {
 // ✅ Text DPP Upload Route
 app.post('/api/upload/dpp', async (req, res) => {
   const { className, subject, title, content, date } = req.body;
-  
+
   if (!className || !subject || !title || !content || !date) {
     return res.status(400).json({ error: 'All fields are required.' });
   }
-  
+
   try {
     const grade = parseInt(className.replace('th', ''));
     const dppDate = new Date(date);
     if (isNaN(dppDate.getTime())) {
       return res.status(400).json({ error: 'Invalid date format.' });
     }
-    
+
     const newDpp = new DPP({
       title,
       content,
@@ -146,11 +156,11 @@ app.post('/api/upload/dpp', async (req, res) => {
       grade,
       subject: subject.toLowerCase()
     });
-    
+
     await newDpp.save();
-    
-    res.status(200).json({ 
-      success: true, 
+
+    res.status(200).json({
+      success: true,
       message: 'Text DPP uploaded successfully.',
       data: { className, subject, title, content, date: dppDate }
     });
@@ -160,65 +170,7 @@ app.post('/api/upload/dpp', async (req, res) => {
   }
 });
 
-// ✅ Get Text DPPs Route
-app.get('/api/dpps/:grade/:subject', async (req, res) => {
-  const { grade, subject } = req.params;
-  
-  try {
-    const dpps = await DPP.find({ 
-      grade: parseInt(grade), 
-      subject: subject.toLowerCase() 
-    }).sort({ date: 1 });
-    
-    res.status(200).json({ textDpps: dpps });
-  } catch (err) {
-    console.error('Error fetching text DPPs:', err);
-    res.status(500).json({ error: 'Failed to fetch text DPPs.' });
-  }
-});
 
-// ✅ Get DPP by Date Route
-app.get('/api/dpps/:grade/:subject/:date', async (req, res) => {
-  const { grade, subject, date } = req.params;
-
-  const gradeNum = parseInt(grade);
-  if (isNaN(gradeNum)) {
-    return res.status(400).json({ error: 'Invalid grade parameter. Must be a number.' });
-  }
-
-  try {
-    const targetDate = new Date(date);
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
-
-    console.log('DPP fetch query:', {
-      grade: gradeNum,
-      subject: subject.toLowerCase(),
-      date,
-      startOfDay,
-      endOfDay
-    });
-
-    const dpps = await DPP.find({
-      grade: gradeNum,
-      subject: subject.toLowerCase(),
-      date: {
-        $gte: startOfDay,
-        $lte: endOfDay
-      }
-    });
-    console.log('DPPs found:', dpps);
-
-    if (!dpps || dpps.length === 0) {
-      return res.status(404).json({ error: 'No DPP found for this date.' });
-    }
-
-    res.status(200).json({ dpp: dpps[0] });
-  } catch (err) {
-    console.error('Error fetching DPP by date:', err);
-    res.status(500).json({ error: 'Failed to fetch DPP.' });
-  }
-});
 
 // Add logging middleware for uploads
 app.use('/uploads', (req, res, next) => {
@@ -226,32 +178,66 @@ app.use('/uploads', (req, res, next) => {
   next();
 });
 
-// ✅ Serve all uploads
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-
 // ============================
 // 3. Routes
 // ============================
 
-const Course = require('./models/course');
+const Course = require('./models/Course');
 const DPP = require('./models/DPP');
 const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const dppRoutes = require('./routes/dppRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const testRoutes = require('./routes/testRoutes');
+const paperRoutes = require('./routes/paperRoutes');
 
 app.use('/api/user', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/dpps', dppRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/papers', paperRoutes);
+app.use('/api', testRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
   res.send('✅ AIMERS API is running...');
 });
 
+// Test PDF route
+app.get('/test-pdf', (req, res) => {
+  const testPdfPath = path.join(__dirname, 'public/uploads/papers/10th/mathematics/2023.pdf');
+  if (fs.existsSync(testPdfPath)) {
+    res.set('Content-Type', 'application/pdf');
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
+    res.sendFile(testPdfPath);
+  } else {
+    res.status(404).json({ error: 'Test PDF not found' });
+  }
+});
+
+// PDF serving route with proper headers
+app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
+  const { fileType, className, subject, filename } = req.params;
+  const pdfPath = path.join(__dirname, `public/uploads/${fileType}/${className}/${subject}/${filename}`);
+  
+  if (fs.existsSync(pdfPath)) {
+    res.set('Content-Type', 'application/pdf');
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
+    res.sendFile(pdfPath);
+  } else {
+    res.status(404).json({ error: 'PDF not found' });
+  }
+});
+
 // ============================
 // 4. Database Connection
 // ============================
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected.'))

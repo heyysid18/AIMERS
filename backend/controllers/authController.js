@@ -5,7 +5,18 @@ const jwt = require('jsonwebtoken');
 // ✅ Register a new user
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { 
+      name, 
+      email, 
+      password, 
+      role, 
+      grade, 
+      phone, 
+      school, 
+      parentName, 
+      parentPhone, 
+      address 
+    } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ error: 'User already exists' });
@@ -17,6 +28,12 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role: role || 'student',
+      grade,
+      phone,
+      school,
+      parentName,
+      parentPhone,
+      address
     });
 
     res.status(201).json({ message: 'Registration successful' });
@@ -48,6 +65,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        grade: user.grade,
+        school: user.school
       },
     });
   } catch (err) {

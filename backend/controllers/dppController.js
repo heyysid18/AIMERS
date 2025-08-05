@@ -3,18 +3,19 @@ const DPP = require('../models/DPP');
 // Create new DPP (admin/teacher)
 exports.createDPP = async (req, res) => {
   try {
-    const { title, subject, grade, chapter, fileUrl } = req.body;
+    const { title, content, date, grade, subject } = req.body;
 
     const newDPP = await DPP.create({
       title,
-      subject,
-      chapter,
-      grade,
-      fileUrl,
+      content,
+      date: new Date(date),
+      grade: parseInt(grade),
+      subject: subject.toLowerCase()
     });
 
     res.status(201).json(newDPP);
   } catch (err) {
+    console.error('Error creating DPP:', err);
     res.status(500).json({ error: 'Failed to create DPP entry' });
   }
 };
@@ -22,9 +23,10 @@ exports.createDPP = async (req, res) => {
 // Get all DPPs
 exports.getAllDPPs = async (req, res) => {
   try {
-    const dpps = await DPP.find().sort({ createdAt: -1 });
+    const dpps = await DPP.find().sort({ date: -1 });
     res.json(dpps);
   } catch (err) {
+    console.error('Error fetching DPPs:', err);
     res.status(500).json({ error: 'Failed to fetch DPPs' });
   }
 };
@@ -33,9 +35,10 @@ exports.getAllDPPs = async (req, res) => {
 exports.getDPPsBySubject = async (req, res) => {
   try {
     const { subject } = req.params;
-    const dpps = await DPP.find({ subject });
+    const dpps = await DPP.find({ subject: subject.toLowerCase() }).sort({ date: -1 });
     res.json(dpps);
   } catch (err) {
+    console.error('Error fetching DPPs for subject:', err);
     res.status(500).json({ error: 'Failed to fetch DPPs for subject' });
   }
 };
