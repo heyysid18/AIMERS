@@ -12,7 +12,9 @@ const app = express();
 // 1. Middleware
 // ============================
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://heyysid18.github.io', 'https://your-frontend-domain.com'] 
+    : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
@@ -27,7 +29,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.pdf')) {
       res.set('Content-Type', 'application/pdf');
-      res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+      res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+        ? 'https://heyysid18.github.io' 
+        : 'http://localhost:3000');
       res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
       res.set('Access-Control-Allow-Headers', 'Content-Type');
     }
@@ -238,8 +242,14 @@ app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
 // 4. Database Connection
 // ============================
 
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+if (!mongoUri) {
+  console.error('❌ MongoDB URI not found in environment variables');
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(mongoUri)
   .then(() => console.log('✅ MongoDB connected.'))
   .catch((err) => console.error('❌ MongoDB connection error:', err.message));
 
