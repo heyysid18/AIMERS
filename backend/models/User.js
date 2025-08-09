@@ -17,14 +17,24 @@ const userSchema = new mongoose.Schema({
   },
   grade: { 
     type: Number, 
-    enum: [9, 10, 11, 12], 
-    required: function() { return this.role === 'student'; }
+    enum: {
+      values: [9, 10, 11, 12],
+      message: 'Grade must be one of 9, 10, 11, or 12.'
+    },
+    required: [function() { return this.role === 'student'; }, 'Grade is required for students.']
   },
   phone: { 
     type: String, 
     required: false,
     trim: true
   },
+  phoneVerified: {
+    type: Boolean,
+    default: false
+  },
+  // Password reset fields
+  passwordResetTokenHash: { type: String, required: false },
+  passwordResetExpiresAt: { type: Date, required: false },
   school: { 
     type: String, 
     required: false,

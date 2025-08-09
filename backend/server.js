@@ -5,6 +5,9 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 require('dotenv').config();
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const User = require('./models/User');
 
 const app = express();
 
@@ -21,6 +24,33 @@ app.use(cors({
   exposedHeaders: ['Content-Length', 'Content-Range', 'Accept-Ranges']
 }));
 app.use(express.json());
+app.use(passport.initialize());
+
+// Google OAuth Strategy - Only initialize if credentials are provided
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: '/api/auth/google/callback',
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    let user = await User.findOne({ email: profile.emails[0].value });
+    if (!user) {
+      user = await User.create({
+        name: profile.displayName,
+        email: profile.emails[0].value,
+        password: '', // No password for Google users
+        role: 'student',
+      });
+    }
+    return done(null, user);
+  } catch (err) {
+    return done(err, null);
+  }
+}));
+} else {
+  console.log('⚠️  Google OAuth credentials not found. Google login will be disabled.');
+}
 
 // ============================
 // Serve static files with correct MIME for .mjs files (PDF.js worker fix)
