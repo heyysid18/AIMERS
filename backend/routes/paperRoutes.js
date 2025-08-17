@@ -1,68 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
-
-// Check paper availability for a specific year
-router.get('/check/:class/:subject/:year', (req, res) => {
-  try {
-    const { class: className, subject, year } = req.params;
-    const papersDir = path.join(__dirname, `../public/uploads/papers/${className}/${subject}`);
-    
-    if (!fs.existsSync(papersDir)) {
-      return res.status(200).json({ available: false });
-    }
-    
-    const files = fs.readdirSync(papersDir);
-    const paperFile = files.find(file => file.endsWith('.pdf') && file.replace('.pdf', '') === year);
-    
-    res.status(200).json({ 
-      available: !!paperFile,
-      filename: paperFile || null
-    });
-  } catch (error) {
-    console.error('Error checking paper availability:', error);
-    res.status(500).json({ error: 'Failed to check paper availability' });
-  }
-});
+const Paper = require('../models/Paper');
 
 // Get all papers
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const papersDir = path.join(__dirname, '../public/uploads/papers');
-    const papers = [];
+    const papers = await Paper.find().sort({ uploadedAt: -1 });
     
-    if (fs.existsSync(papersDir)) {
-      const classes = fs.readdirSync(papersDir);
-      
-      classes.forEach(className => {
-        const classPath = path.join(papersDir, className);
-        if (fs.statSync(classPath).isDirectory()) {
-          const subjects = fs.readdirSync(classPath);
-          
-          subjects.forEach(subject => {
-            const subjectPath = path.join(classPath, subject);
-            if (fs.statSync(subjectPath).isDirectory()) {
-              const files = fs.readdirSync(subjectPath);
-              
-              files.forEach(file => {
-                if (file.endsWith('.pdf')) {
-                  papers.push({
-                    className,
-                    subject,
-                    filename: file,
-                    year: file.replace('.pdf', ''),
-                    url: `/uploads/papers/${className}/${subject}/${file}`
-                  });
-                }
-              });
-            }
-          });
-        }
-      });
-    }
+    const formattedPapers = papers.map(paper => ({
+      id: paper._id,
+      className: paper.className,
+      subject: paper.subject,
+      filename: paper.originalName,
+      year: paper.year,
+      type: paper.type,
+      size: paper.size,
+      uploadedAt: paper.uploadedAt,
+      url: `/api/pdf/${paper._id}`
+    }));
     
-    res.json({ papers });
+    res.json({ papers: formattedPapers });
   } catch (error) {
     console.error('Error fetching papers:', error);
     res.status(500).json({ error: 'Failed to fetch papers' });
@@ -70,41 +27,21 @@ router.get('/', (req, res) => {
 });
 
 // Get board papers
-router.get('/board', (req, res) => {
+router.get('/board', async (req, res) => {
   try {
-    const papersDir = path.join(__dirname, '../public/uploads/papers');
-    const boardPapers = [];
+    const boardPapers = await Paper.find({ type: 'board' }).sort({ uploadedAt: -1 });
     
-    if (fs.existsSync(papersDir)) {
-      const classes = fs.readdirSync(papersDir);
-      
-      classes.forEach(className => {
-        const classPath = path.join(papersDir, className);
-        if (fs.statSync(classPath).isDirectory()) {
-          const subjects = fs.readdirSync(classPath);
-          
-          subjects.forEach(subject => {
-            const subjectPath = path.join(classPath, subject);
-            if (fs.statSync(subjectPath).isDirectory()) {
-              const files = fs.readdirSync(subjectPath);
-              
-              files.forEach(file => {
-                if (file.endsWith('.pdf')) {
-                  boardPapers.push({
-                    className,
-                    subject,
-                    filename: file,
-                    year: file.replace('.pdf', ''),
-                    url: `/uploads/papers/${className}/${subject}/${file}`,
-                    type: 'board'
-                  });
-                }
-              });
-            }
-          });
-        }
-      });
-    }
+    const formattedPapers = boardPapers.map(paper => ({
+      id: paper._id,
+      className: paper.className,
+      subject: paper.subject,
+      filename: paper.originalName,
+      year: paper.year,
+      type: paper.type,
+      size: paper.size,
+      uploadedAt: paper.uploadedAt,
+      url: `/api/pdf/${paper._id}`
+    }));
     
     res.json({ papers: boardPapers });
   } catch (error) {
@@ -114,41 +51,21 @@ router.get('/board', (req, res) => {
 });
 
 // Get AIMERS institute papers
-router.get('/aimers', (req, res) => {
+router.get('/aimers', async (req, res) => {
   try {
-    const papersDir = path.join(__dirname, '../public/uploads/papers');
-    const aimersPapers = [];
+    const aimersPapers = await Paper.find({ type: 'aimers' }).sort({ uploadedAt: -1 });
     
-    if (fs.existsSync(papersDir)) {
-      const classes = fs.readdirSync(papersDir);
-      
-      classes.forEach(className => {
-        const classPath = path.join(papersDir, className);
-        if (fs.statSync(classPath).isDirectory()) {
-          const subjects = fs.readdirSync(classPath);
-          
-          subjects.forEach(subject => {
-            const subjectPath = path.join(classPath, subject);
-            if (fs.statSync(subjectPath).isDirectory()) {
-              const files = fs.readdirSync(subjectPath);
-              
-              files.forEach(file => {
-                if (file.endsWith('.pdf')) {
-                  aimersPapers.push({
-                    className,
-                    subject,
-                    filename: file,
-                    year: file.replace('.pdf', ''),
-                    url: `/uploads/papers/${className}/${subject}/${file}`,
-                    type: 'aimers'
-                  });
-                }
-              });
-            }
-          });
-        }
-      });
-    }
+    const formattedPapers = aimersPapers.map(paper => ({
+      id: paper._id,
+      className: paper.className,
+      subject: paper.subject,
+      filename: paper.originalName,
+      year: paper.year,
+      type: paper.type,
+      size: paper.size,
+      uploadedAt: paper.uploadedAt,
+      url: `/api/pdf/${paper._id}`
+    }));
     
     res.json({ papers: aimersPapers });
   } catch (error) {
@@ -158,32 +75,73 @@ router.get('/aimers', (req, res) => {
 });
 
 // Get papers by class and subject
-router.get('/:class/:subject', (req, res) => {
+router.get('/:class/:subject', async (req, res) => {
   try {
     const { class: className, subject } = req.params;
-    const papersDir = path.join(__dirname, `../public/uploads/papers/${className}/${subject}`);
-    const papers = [];
+    const papers = await Paper.find({ 
+      className, 
+      subject: subject.toLowerCase() 
+    }).sort({ uploadedAt: -1 });
     
-    if (fs.existsSync(papersDir)) {
-      const files = fs.readdirSync(papersDir);
-      
-      files.forEach(file => {
-        if (file.endsWith('.pdf')) {
-          papers.push({
-            className,
-            subject,
-            filename: file,
-            year: file.replace('.pdf', ''),
-            url: `/uploads/papers/${className}/${subject}/${file}`
-          });
-        }
-      });
-    }
+    const formattedPapers = papers.map(paper => ({
+      id: paper._id,
+      className: paper.className,
+      subject: paper.subject,
+      filename: paper.originalName,
+      year: paper.year,
+      type: paper.type,
+      size: paper.size,
+      uploadedAt: paper.uploadedAt,
+      url: `/api/pdf/${paper._id}`
+    }));
     
-    res.json({ papers });
+    res.json({ papers: formattedPapers });
   } catch (error) {
     console.error('Error fetching papers by class and subject:', error);
     res.status(500).json({ error: 'Failed to fetch papers' });
+  }
+});
+
+// Check paper availability for a specific year
+router.get('/check/:class/:subject/:year', async (req, res) => {
+  try {
+    const { class: className, subject, year } = req.params;
+    
+    const paper = await Paper.findOne({
+      className,
+      subject: subject.toLowerCase(),
+      year
+    });
+    
+    res.status(200).json({ 
+      available: !!paper,
+      filename: paper ? paper.originalName : null,
+      paperId: paper ? paper._id : null
+    });
+  } catch (error) {
+    console.error('Error checking paper availability:', error);
+    res.status(500).json({ error: 'Failed to check paper availability' });
+  }
+});
+
+// Delete a paper
+router.delete('/:paperId', async (req, res) => {
+  try {
+    const { paperId } = req.params;
+    
+    const paper = await Paper.findByIdAndDelete(paperId);
+    if (!paper) {
+      return res.status(404).json({ error: 'Paper not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Paper deleted successfully',
+      deletedPaper: paper.originalName
+    });
+  } catch (error) {
+    console.error('Error deleting paper:', error);
+    res.status(500).json({ error: 'Failed to delete paper' });
   }
 });
 

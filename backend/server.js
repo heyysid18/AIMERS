@@ -87,39 +87,101 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // ============================
-// 2. Multer Dynamic File Upload Setup
+// 2. Multer Memory Storage Setup (for MongoDB)
 // ============================
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const { fileType, className, subject } = req.params;
-    const dir = path.join(__dirname, `public/uploads/${fileType}/${className}/${subject}`);
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/\s/g, '_');
-    cb(null, safeName);
+const storage = multer.memoryStorage(); // Store file in memory temporarily
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 15 * 1024 * 1024 // 15MB limit (safe for MongoDB document storage)
   }
 });
 
-const upload = multer({ storage });
+// Import Paper model
+const Paper = require('./models/Paper');
 
-// ✅ Dynamic Upload Route
-app.post('/api/upload/:fileType/:className/:subject', upload.single('pdf'), (req, res) => {
-  const { fileType, className, subject } = req.params;
+// ✅ Dynamic Upload Route - Now stores in MongoDB
+app.post('/api/upload/:fileType/:className/:subject', upload.single('pdf'), async (req, res) => {
+  try {
+    const { fileType, className, subject } = req.params;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: '❌ No file uploaded.' });
+    }
 
-  if (!req.file) {
-    return res.status(400).json({ error: '❌ No file uploaded.' });
+    // Check file size (should be under 15MB for MongoDB)
+    if (req.file.size > 15 * 1024 * 1024) {
+      return res.status(400).json({ error: '❌ File too large. Maximum size is 15MB.' });
+    }
+
+    // Convert file buffer to base64
+    const base64Content = req.file.buffer.toString('base64');
+
+    // Create paper document
+    const paper = new Paper({
+      name: req.file.originalname.replace(/\s/g, '_'),
+      originalName: req.file.originalname,
+      content: base64Content,
+      contentType: req.file.mimetype,
+      size: req.file.size,
+      fileType,
+      className,
+      subject,
+      year: req.body.year || new Date().getFullYear().toString(),
+      type: req.body.type || 'other',
+      uploadedBy: req.user?.id // If user is authenticated
+    });
+
+    await paper.save();
+
+    console.log(`✅ File uploaded to MongoDB: ${req.file.originalname}`);
+
+    return res.status(200).json({
+      success: true,
+      message: '✅ File uploaded successfully to database.',
+      paperId: paper._id,
+      filename: paper.name
+    });
+
+  } catch (error) {
+    console.error('❌ Upload error:', error);
+    return res.status(500).json({ 
+      error: '❌ Failed to upload file to database.',
+      details: error.message 
+    });
   }
+});
 
-  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${fileType}/${className}/${subject}/${req.file.filename}`;
+// ✅ PDF serving route from MongoDB
+app.get('/api/pdf/:paperId', async (req, res) => {
+  try {
+    const { paperId } = req.params;
+    
+    const paper = await Paper.findById(paperId);
+    if (!paper) {
+      return res.status(404).json({ error: 'PDF not found' });
+    }
 
-  return res.status(200).json({
-    success: true,
-    message: '✅ File uploaded successfully.',
-    fileUrl
-  });
+    // Convert base64 back to buffer
+    const fileBuffer = Buffer.from(paper.content, 'base64');
+
+    // Set headers
+    res.set('Content-Type', paper.contentType);
+    res.set('Content-Length', paper.size);
+    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
+    res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
+
+    // Send file
+    res.send(fileBuffer);
+
+  } catch (error) {
+    console.error('❌ PDF serving error:', error);
+    res.status(500).json({ error: 'Failed to serve PDF' });
+  }
 });
 
 // ✅ Video Topic Upload Route
@@ -260,40 +322,7 @@ app.post('/api/test-register', (req, res) => {
   });
 });
 
-// Test PDF route
-app.get('/test-pdf', (req, res) => {
-  const testPdfPath = path.join(__dirname, 'public/uploads/papers/10th/mathematics/2023.pdf');
-  if (fs.existsSync(testPdfPath)) {
-    res.set('Content-Type', 'application/pdf');
-    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
-      ? 'https://aimers-frontend.onrender.com' 
-      : 'http://localhost:3000');
-    res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
-    res.sendFile(testPdfPath);
-  } else {
-    res.status(404).json({ error: 'Test PDF not found' });
-  }
-});
-
-// PDF serving route with proper headers
-app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
-  const { fileType, className, subject, filename } = req.params;
-  const pdfPath = path.join(__dirname, `public/uploads/${fileType}/${className}/${subject}/${filename}`);
-  
-  if (fs.existsSync(pdfPath)) {
-    res.set('Content-Type', 'application/pdf');
-    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
-      ? 'https://aimers-frontend.onrender.com' 
-      : 'http://localhost:3000');
-
-    res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
-    res.sendFile(pdfPath);
-  } else {
-    res.status(404).json({ error: 'PDF not found' });
-  }
-});
+// ✅ Video Topic Upload Route
 
 // ============================
 // 4. Database Connection
