@@ -68,7 +68,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.pdf')) {
       res.set('Content-Type', 'application/pdf');
-          res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
       ? 'https://aimers-frontend.onrender.com' 
       : 'http://localhost:3000');
       res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
@@ -284,6 +284,7 @@ app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
     res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
       ? 'https://aimers-frontend.onrender.com' 
       : 'http://localhost:3000');
+
     res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
     res.sendFile(pdfPath);
