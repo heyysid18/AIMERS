@@ -16,7 +16,7 @@ const app = express();
 // ============================
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://heyysid18.github.io', 'https://your-frontend-domain.com'] 
+    ? ['https://aimers-frontend.onrender.com', 'https://heyysid18.github.io'] 
     : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
@@ -60,8 +60,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
     if (path.endsWith('.pdf')) {
       res.set('Content-Type', 'application/pdf');
       res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
-        ? 'https://heyysid18.github.io' 
-        : 'http://localhost:3000');
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
       res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
       res.set('Access-Control-Allow-Headers', 'Content-Type');
     }
@@ -243,7 +243,9 @@ app.get('/test-pdf', (req, res) => {
   const testPdfPath = path.join(__dirname, 'public/uploads/papers/10th/mathematics/2023.pdf');
   if (fs.existsSync(testPdfPath)) {
     res.set('Content-Type', 'application/pdf');
-    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
     res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
     res.sendFile(testPdfPath);
@@ -259,6 +261,9 @@ app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
   
   if (fs.existsSync(pdfPath)) {
     res.set('Content-Type', 'application/pdf');
+    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
     res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
     res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
