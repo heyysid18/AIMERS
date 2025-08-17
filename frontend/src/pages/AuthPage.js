@@ -180,7 +180,7 @@ export default function AuthPage() {
   };
 
   const handleGoogleSignIn = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = 'https://aimers-backend-clv3.onrender.com/api/auth/google';
   };
 
   const getModeTitle = () => {

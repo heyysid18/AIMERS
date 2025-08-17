@@ -23,6 +23,8 @@ app.use((req, res, next) => {
   next();
 });
 
+// CORS Configuration
+// Set NODE_ENV=production in Render environment variables to enable production CORS
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://aimers-frontend.onrender.com', 'https://heyysid18.github.io'] 
