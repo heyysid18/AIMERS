@@ -21,7 +21,7 @@ router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
 // Protected routes
-//router.get('/profile', protect, authController.getProfile);
+router.get('/profile', protect, authController.getProfile);
 
 // ✅ Put: Update user profile info
 router.put('/profile', protect, async (req, res) => {

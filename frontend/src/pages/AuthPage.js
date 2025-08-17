@@ -1,10 +1,12 @@
 // src/pages/AuthPage.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
 import "../Theme.css";
 import { useAuth } from "../contexts/AuthContext";
-import { sendPhoneOtp as apiSendOtp, verifyPhoneOtp as apiVerifyOtp } from "../api/api";
+import { 
+  registerUser,
+  loginUser
+} from "../api/api";
 
 export default function AuthPage() {
   // Modes: "user-login", "user-register", "admin-login"
@@ -26,12 +28,6 @@ export default function AuthPage() {
   
   const [message, setMessage] = useState("");
 
-  // OTP state
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-
   // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -48,10 +44,6 @@ export default function AuthPage() {
     setMessage("");
     setShowPassword(false);
     setShowConfirm(false);
-    setOtp("");
-    setOtpSent(false);
-    setOtpVerified(false);
-    setResendCooldown(0);
     if (mode === "user-register") {
       setForm({ name: "", email: "", password: "", confirmPassword: "", grade: "", phone: "" });
     } else {
@@ -73,14 +65,11 @@ export default function AuthPage() {
     }
   }, [location, login, navigate]);
 
-  // Cooldown timer
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => setResendCooldown((c) => c - 1), 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
-
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    console.log(`Field ${name} changed to: "${value}"`);
+    setForm({ ...form, [name]: value });
+  };
 
   const getPasswordStrength = useMemo(() => {
     const password = form.password || "";
@@ -111,80 +100,75 @@ export default function AuthPage() {
         setMessage("Please select a valid class (9, 10, 11, or 12)");
         return false;
       }
-      if (form.phone && !otpVerified) {
-        setMessage("Please verify your phone number");
-        return false;
-      }
+      // Phone validation completely removed - any phone number is accepted
+      console.log('Form validation passed - phone number not required');
     }
     return true;
-  };
-
-  const handleSendOtp = async () => {
-    setMessage("");
-    try {
-      if (!form.phone || form.phone.trim().length < 10) {
-        setMessage("Enter a valid phone number");
-        return;
-      }
-      await apiSendOtp({ phone: form.phone.trim() });
-      setOtpSent(true);
-      setResendCooldown(60);
-      setMessage("OTP sent to your phone");
-    } catch (error) {
-      setMessage(error.response?.data?.error || "Failed to send OTP");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    setMessage("");
-    try {
-      if (!otp || otp.length !== 6) {
-        setMessage("Enter the 6-digit code");
-        return;
-      }
-      await apiVerifyOtp({ phone: form.phone.trim(), code: otp.trim() });
-      setOtpVerified(true);
-      setMessage("Phone verified");
-    } catch (error) {
-      setMessage(error.response?.data?.error || "Invalid or expired code");
-    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    
+    console.log('=== REGISTRATION DEBUG START ===');
+    console.log('Form data:', form);
+    console.log('Mode:', mode);
+    console.log('Phone field value:', form.phone);
+    console.log('Phone field length:', form.phone ? form.phone.length : 0);
+    console.log('Phone field trimmed:', form.phone ? form.phone.trim() : 'N/A');
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
 
     try {
       let response;
       if (mode === "user-login") {
-        response = await axios.post("http://localhost:5000/api/auth/login", {
-          email: form.email,
-          password: form.password,
-        });
+        console.log('Attempting login...');
+        response = await loginUser({ email: form.email, password: form.password });
       } else if (mode === "user-register") {
-        response = await axios.post("http://localhost:5000/api/auth/register", {
+        const registrationData = {
           name: form.name,
           email: form.email,
           password: form.password,
           grade: form.grade,
-          phone: form.phone,
-        });
+        };
+        
+        // Always include phone if provided (no validation required)
+        if (form.phone && form.phone.trim()) {
+          registrationData.phone = form.phone.trim();
+          console.log('Phone number included:', registrationData.phone);
+        } else {
+          console.log('No phone number provided');
+        }
+        
+        console.log('Final registration data being sent:', registrationData);
+        console.log('About to call registerUser API...');
+        
+        response = await registerUser(registrationData);
+        console.log('Registration response received:', response);
       } else if (mode === "admin-login") {
-        response = await axios.post("http://localhost:5000/api/auth/admin-login", {
-          email: form.email,
-          password: form.password,
-        });
+        response = await loginUser({ email: form.email, password: form.password });
       }
 
       if (response.data.token) {
+        console.log('Success! Token received:', response.data.token);
         login(response.data.token, response.data.user);
         navigate("/");
       } else if (response.data.message) {
+        console.log('Response message:', response.data.message);
         setMessage(response.data.message);
       }
     } catch (error) {
+      console.error('=== REGISTRATION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error response:', error.response);
+      console.error('Error status:', error.response?.status);
+      console.error('Error data:', error.response?.data);
+      console.error('Error headers:', error.response?.headers);
+      
       setMessage(
         error.response?.data?.error ||
         error.response?.data?.message ||
@@ -192,6 +176,7 @@ export default function AuthPage() {
         "An error occurred"
       );
     }
+    console.log('=== REGISTRATION DEBUG END ===');
   };
 
   const handleGoogleSignIn = () => {
@@ -389,39 +374,8 @@ export default function AuthPage() {
                           className="form-input"
                           placeholder="Optional"
                         />
-                        <button
-                          type="button"
-                          className="visibility-toggle"
-                          onClick={handleSendOtp}
-                          disabled={!form.phone || resendCooldown > 0}
-                          aria-label="Send OTP"
-                        >
-                          {resendCooldown > 0 ? `${resendCooldown}s` : <i className="fas fa-paper-plane"></i>}
-                        </button>
                       </div>
                     </div>
-
-                    {otpSent && (
-                      <div className="form-group">
-                        <label className="form-label">
-                          <i className="fas fa-key"></i>
-                          Enter OTP
-                        </label>
-                        <div className="input-group">
-                          <input
-                            type="text"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            className="form-input"
-                            placeholder="6-digit code"
-                            maxLength={6}
-                          />
-                          <button type="button" className="visibility-toggle" onClick={handleVerifyOtp} aria-label="Verify OTP">
-                            <i className={`fas ${otpVerified ? 'fa-check-circle' : 'fa-check'}`}></i>
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
 
@@ -432,7 +386,7 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                <button type="submit" className="submit-button" disabled={mode === 'user-register' && form.phone && !otpVerified}>
+                <button type="submit" className="submit-button">
                   <i className="fas fa-sign-in-alt"></i>
                   {mode === "user-login" ? "Sign In" : mode === "user-register" ? "Create Account" : "Admin Login"}
                 </button>

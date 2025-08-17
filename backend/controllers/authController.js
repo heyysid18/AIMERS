@@ -115,6 +115,10 @@ exports.verifyPhoneOtp = async (req, res) => {
 // ✅ Register a new user
 exports.register = async (req, res) => {
   try {
+    console.log('=== REGISTRATION REQUEST START ===');
+    console.log('Request body:', req.body);
+    console.log('Request headers:', req.headers);
+    
     const { 
       name, 
       email, 
@@ -128,31 +132,43 @@ exports.register = async (req, res) => {
       address 
     } = req.body;
 
-    // If phone is provided, require verified OTP
+    console.log('Extracted data:', { name, email, role, grade, phone, school, parentName, parentPhone, address });
+    console.log('Phone field type:', typeof phone);
+    console.log('Phone field value:', phone);
+    console.log('Phone field length:', phone ? phone.length : 0);
+
+    // Phone verification completely removed - any phone number is accepted
     if (phone) {
-      const otpRecord = await UserOTP.findOne({ phone });
-      if (!otpRecord || !otpRecord.verified) {
-        return res.status(400).json({ error: 'Please verify your phone number before registering' });
-      }
+      console.log('Phone provided and will be stored without verification');
+    } else {
+      console.log('No phone provided');
     }
 
     // Backend validation for grade
     if ((role === undefined || role === 'student')) {
+      console.log('Validating grade for student...');
       const validGrades = [9, 10, 11, 12];
       if (!grade || !validGrades.includes(Number(grade))) {
+        console.log('Grade validation failed:', grade);
         return res.status(400).json({ error: 'Grade is required and must be one of 9, 10, 11, or 12.' });
       }
+      console.log('Grade validation successful:', grade);
     }
 
+    console.log('Checking for existing user...');
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: 'User already exists' });
+    if (existingUser) {
+      console.log('User already exists:', existingUser.email);
+      return res.status(400).json({ error: 'User already exists' });
+    }
+    console.log('No existing user found, proceeding...');
 
+    console.log('Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+    console.log('Creating user with data:', {
       name,
       email,
-      password: hashedPassword,
       role: role || 'student',
       grade,
       phone,
@@ -163,12 +179,39 @@ exports.register = async (req, res) => {
       address
     });
 
-    // Clear OTP record after use
-    if (phone) await UserOTP.deleteMany({ phone });
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'student',
+      grade,
+      phone,
+      phoneVerified: Boolean(phone), // Set to true if phone is provided
+      school,
+      parentName,
+      parentPhone,
+      address
+    });
+
+    console.log('User created successfully:', user._id);
+    console.log('User data after creation:', {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      phoneVerified: user.phoneVerified
+    });
+
+    // OTP clearing temporarily disabled
+    // if (phone) {
+    //   console.log('Clearing OTP records...');
+    //   await UserOTP.deleteMany({ phone });
+    // }
 
     // Auto-login after successful registration for better UX
+    console.log('Generating JWT token...');
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
+    console.log('=== REGISTRATION SUCCESS ===');
     return res.status(201).json({
       token,
       user: {
@@ -180,8 +223,14 @@ exports.register = async (req, res) => {
       }
     });
   } catch (err) {
+    console.error("=== REGISTRATION ERROR ===");
     console.error("❌ Register Error:", err);
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    
     if (err.name === 'ValidationError') {
+      console.error("Validation errors:", err.errors);
       const firstError = Object.values(err.errors)[0]?.message || 'Validation error';
       return res.status(400).json({ error: firstError });
     }

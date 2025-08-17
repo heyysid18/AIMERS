@@ -14,9 +14,18 @@ const app = express();
 // ============================
 // 1. Middleware
 // ============================
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path} - ${new Date().toISOString()}`);
+  console.log('Request body:', req.body);
+  console.log('Request headers:', req.headers);
+  next();
+});
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://heyysid18.github.io', 'https://your-frontend-domain.com'] 
+    ? ['https://aimers-frontend.onrender.com', 'https://heyysid18.github.io'] 
     : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
@@ -59,9 +68,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.pdf')) {
       res.set('Content-Type', 'application/pdf');
-      res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
-        ? 'https://heyysid18.github.io' 
-        : 'http://localhost:3000');
+          res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
       res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
       res.set('Access-Control-Allow-Headers', 'Content-Type');
     }
@@ -238,12 +247,25 @@ app.get('/', (req, res) => {
   res.send('✅ AIMERS API is running...');
 });
 
+// Test registration endpoint
+app.post('/api/test-register', (req, res) => {
+  console.log('Test registration endpoint hit');
+  console.log('Request body:', req.body);
+  res.json({ 
+    success: true, 
+    message: 'Test endpoint working',
+    receivedData: req.body 
+  });
+});
+
 // Test PDF route
 app.get('/test-pdf', (req, res) => {
   const testPdfPath = path.join(__dirname, 'public/uploads/papers/10th/mathematics/2023.pdf');
   if (fs.existsSync(testPdfPath)) {
     res.set('Content-Type', 'application/pdf');
-    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
     res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
     res.sendFile(testPdfPath);
@@ -259,7 +281,9 @@ app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
   
   if (fs.existsSync(pdfPath)) {
     res.set('Content-Type', 'application/pdf');
-    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? 'https://aimers-frontend.onrender.com' 
+      : 'http://localhost:3000');
     res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
     res.sendFile(pdfPath);
@@ -275,13 +299,29 @@ app.get('/api/pdf/:fileType/:className/:subject/:filename', (req, res) => {
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
 if (!mongoUri) {
   console.error('❌ MongoDB URI not found in environment variables');
+  console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
   process.exit(1);
 }
 
+console.log('🔌 Attempting to connect to MongoDB...');
+console.log('MongoDB URI:', mongoUri ? `${mongoUri.substring(0, 20)}...` : 'NOT FOUND');
+
 mongoose
-  .connect(mongoUri)
-  .then(() => console.log('✅ MongoDB connected.'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err.message));
+  .connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('✅ MongoDB connected successfully');
+    console.log('Database:', mongoose.connection.db.databaseName);
+    console.log('Host:', mongoose.connection.host);
+    console.log('Port:', mongoose.connection.port);
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+    console.error('Error details:', err);
+    process.exit(1);
+  });
 
 // ============================
 // 5. Launch Server

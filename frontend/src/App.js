@@ -74,7 +74,9 @@ function AppLayout() {
         <Route path="/dpps/view/:class/:subject/:date" element={<DPPViewerPage />} />
         <Route path="/papers" element={
           <ProtectedRoute>
-            <PapersPage />
+            <ErrorBoundary>
+              <PapersPage />
+            </ErrorBoundary>
           </ProtectedRoute>
         } />
         <Route path="/papers/explore" element={
@@ -84,7 +86,9 @@ function AppLayout() {
         } />
         <Route path="/papers/board/:class/:subject/:year" element={
           <ProtectedRoute>
-            <PaperViewPage />
+            <ErrorBoundary>
+              <PaperViewPage />
+            </ErrorBoundary>
           </ProtectedRoute>
         } />
         <Route path="/my-account" element={

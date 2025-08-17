@@ -48,10 +48,6 @@ function AuthButton() {
                 <i className="fas fa-user"></i>
                 <span>My Account</span>
               </Link>
-              <Link to="/profile" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
-                <i className="fas fa-id-card"></i>
-                <span>Profile</span>
-              </Link>
               <Link to="/upload" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
                 <i className="fas fa-upload"></i>
                 <span>Upload Content</span>

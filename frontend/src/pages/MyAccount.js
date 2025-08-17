@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
+import "../Theme.css";
+import { getProfile } from "../api/api";
 
 export default function MyAccount() {
-  const { token, logout } = useAuth();
+  const { user: authUser, logout, token } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
@@ -15,15 +17,15 @@ export default function MyAccount() {
   });
 
   useEffect(() => {
-    fetchUserData();
-    fetchDashboardData();
-  }, []);
+    if (token) {
+      fetchUserData();
+      fetchDashboardData();
+    }
+  }, [token]);
 
   const fetchUserData = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/user/profile", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await getProfile();
       setUser(response.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
