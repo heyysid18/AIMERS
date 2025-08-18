@@ -16,9 +16,10 @@ router.get('/', async (req, res) => {
       type: paper.type,
       size: paper.size,
       uploadedAt: paper.uploadedAt,
-      url: `/api/pdf/${paper._id}`
+      url: `${req.protocol}://${req.get('host')}/api/pdf/${paper._id}`
     }));
     
+    console.log(`📚 Fetched ${formattedPapers.length} papers from MongoDB`);
     res.json({ papers: formattedPapers });
   } catch (error) {
     console.error('Error fetching papers:', error);
@@ -40,10 +41,11 @@ router.get('/board', async (req, res) => {
       type: paper.type,
       size: paper.size,
       uploadedAt: paper.uploadedAt,
-      url: `/api/pdf/${paper._id}`
+      url: `${req.protocol}://${req.get('host')}/api/pdf/${paper._id}`
     }));
     
-    res.json({ papers: boardPapers });
+    console.log(`📚 Fetched ${formattedPapers.length} board papers from MongoDB`);
+    res.json({ papers: formattedPapers });
   } catch (error) {
     console.error('Error fetching board papers:', error);
     res.status(500).json({ error: 'Failed to fetch board papers' });
@@ -64,10 +66,11 @@ router.get('/aimers', async (req, res) => {
       type: paper.type,
       size: paper.size,
       uploadedAt: paper.uploadedAt,
-      url: `/api/pdf/${paper._id}`
+      url: `${req.protocol}://${req.get('host')}/api/pdf/${paper._id}`
     }));
     
-    res.json({ papers: aimersPapers });
+    console.log(`📚 Fetched ${formattedPapers.length} AIMERS papers from MongoDB`);
+    res.json({ papers: formattedPapers });
   } catch (error) {
     console.error('Error fetching AIMERS papers:', error);
     res.status(500).json({ error: 'Failed to fetch AIMERS papers' });
@@ -92,9 +95,10 @@ router.get('/:class/:subject', async (req, res) => {
       type: paper.type,
       size: paper.size,
       uploadedAt: paper.uploadedAt,
-      url: `/api/pdf/${paper._id}`
+      url: `${req.protocol}://${req.get('host')}/api/pdf/${paper._id}`
     }));
     
+    console.log(`📚 Fetched ${formattedPapers.length} papers for ${className} ${subject} from MongoDB`);
     res.json({ papers: formattedPapers });
   } catch (error) {
     console.error('Error fetching papers by class and subject:', error);
@@ -121,6 +125,38 @@ router.get('/check/:class/:subject/:year', async (req, res) => {
   } catch (error) {
     console.error('Error checking paper availability:', error);
     res.status(500).json({ error: 'Failed to check paper availability' });
+  }
+});
+
+// Debug route to check all papers in MongoDB
+router.get('/debug/all', async (req, res) => {
+  try {
+    const allPapers = await Paper.find().sort({ uploadedAt: -1 });
+    console.log(`🔍 Debug: Found ${allPapers.length} papers in MongoDB`);
+    
+    const debugInfo = allPapers.map(paper => ({
+      id: paper._id,
+      name: paper.name,
+      originalName: paper.originalName,
+      fileType: paper.fileType,
+      className: paper.className,
+      subject: paper.subject,
+      year: paper.year,
+      type: paper.type,
+      size: paper.size,
+      uploadedAt: paper.uploadedAt,
+      hasContent: !!paper.content,
+      contentLength: paper.content ? paper.content.length : 0
+    }));
+    
+    res.json({ 
+      totalPapers: allPapers.length,
+      papers: debugInfo,
+      message: 'Debug information for all papers'
+    });
+  } catch (error) {
+    console.error('Error in debug route:', error);
+    res.status(500).json({ error: 'Failed to get debug info' });
   }
 });
 

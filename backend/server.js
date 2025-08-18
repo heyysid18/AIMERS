@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://aimers-frontend.onrender.com', 'https://heyysid18.github.io'] 
-    : 'http://localhost:3000',
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
@@ -118,6 +118,13 @@ app.post('/api/upload/:fileType/:className/:subject', upload.single('pdf'), asyn
     // Convert file buffer to base64
     const base64Content = req.file.buffer.toString('base64');
 
+    // Extract year from filename (e.g., "2023.pdf" -> "2023")
+    let extractedYear = null;
+    const yearMatch = req.file.originalname.match(/(\d{4})/);
+    if (yearMatch) {
+      extractedYear = yearMatch[1];
+    }
+
     // Create paper document
     const paper = new Paper({
       name: req.file.originalname.replace(/\s/g, '_'),
@@ -128,7 +135,7 @@ app.post('/api/upload/:fileType/:className/:subject', upload.single('pdf'), asyn
       fileType,
       className,
       subject,
-      year: req.body.year || new Date().getFullYear().toString(),
+      year: extractedYear || req.body.year || new Date().getFullYear().toString(),
       type: req.body.type || 'other',
       uploadedBy: req.user?.id // If user is authenticated
     });
@@ -309,6 +316,15 @@ app.use('/api', testRoutes);
 // Health Check
 app.get('/', (req, res) => {
   res.send('✅ AIMERS API is running...');
+});
+
+// Test connection endpoint
+app.get('/api/test-connection', (req, res) => {
+  res.json({ 
+    message: 'Backend is running!', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Test registration endpoint

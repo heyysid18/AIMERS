@@ -14,6 +14,11 @@ const SUBJECTS = [
   "biology"
 ];
 
+// API base URL - Use localhost for local testing, Render URL for production
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://aimers-backend-clv3.onrender.com/api';
+
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -37,9 +42,11 @@ export default function PDFUploader() {
   const [fileType, setFileType] = useState("dpps");
   const [className, setClassName] = useState("10th");
   const [subject, setSubject] = useState("mathematics");
+  const [year, setYear] = useState(new Date().getFullYear().toString());
   const [file, setFile] = useState(null);
   const [fileUrl, setFileUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
 
   // Video topic upload state
   const [videoClass, setVideoClass] = useState("10th");
@@ -60,6 +67,8 @@ export default function PDFUploader() {
     setFile(null);
     setFileUrl("");
     setUploading(false);
+    setUploadMessage("");
+    setYear(new Date().getFullYear().toString());
     setVideoTopic("");
     setVideoUrl("");
     setVideoSuccess(false);
@@ -71,19 +80,38 @@ export default function PDFUploader() {
 
   // Handle PDF Upload
   const handleUpload = async () => {
-    if (!file) return alert("Please select a PDF file.");
+    if (!file) {
+      setUploadMessage("❌ Please select a PDF file.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("pdf", file);
+    formData.append("year", year);
 
     try {
       setUploading(true);
-      const endpoint = `http://localhost:5000/api/upload/${fileType}/${className}/${subject}`;
+      setUploadMessage("📤 Uploading...");
+      
+      const endpoint = `${API_BASE_URL}/upload/${fileType}/${className}/${subject}`;
+      console.log('Uploading to:', endpoint);
+      
       const res = await axios.post(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setFileUrl(res.data.fileUrl);
-    } catch {
-      alert("Upload failed. Please check your server.");
+      
+      console.log('Upload response:', res.data);
+      setFileUrl(res.data.paperId ? `/api/pdf/${res.data.paperId}` : '');
+      setUploadMessage("✅ " + res.data.message);
+      
+      // Reset form after successful upload
+      setTimeout(() => {
+        resetForm();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadMessage("❌ Upload failed: " + (error.response?.data?.error || error.message));
     } finally {
       setUploading(false);
     }
@@ -91,9 +119,13 @@ export default function PDFUploader() {
 
   // Handle Video Topic Upload
   const handleVideoUpload = async () => {
-    if (!videoTopic || !videoUrl) return alert("Please enter both topic and video link.");
+    if (!videoTopic || !videoUrl) {
+      alert("Please enter both topic and video link.");
+      return;
+    }
+    
     try {
-      await axios.post("http://localhost:5000/api/upload/video", {
+      const response = await axios.post(`${API_BASE_URL}/upload/video`, {
         className: videoClass,
         subject: videoSubject,
         topic: videoTopic,
@@ -111,7 +143,7 @@ export default function PDFUploader() {
   const handleDppUpload = async () => {
     if (!dppTitle || !dppContent || !dppDate) return alert("Please enter title, content, and date.");
     try {
-      await axios.post("http://localhost:5000/api/upload/dpp", {
+      await axios.post(`${API_BASE_URL}/upload/dpp`, {
         className: dppClass,
         subject: dppSubject,
         title: dppTitle,
@@ -137,6 +169,18 @@ export default function PDFUploader() {
         <SelectBox label="Class" value={className} setValue={setClassName} options={CLASSES.map(e => ({ label: e, value: e }))} />
         <SelectBox label="Subject" value={subject} setValue={setSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
       </div>
+      <div style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          placeholder="Year (e.g., 2023)"
+          value={year}
+          onChange={e => setYear(e.target.value)}
+          style={{ ...selectStyle, width: "100%", maxWidth: "200px" }}
+        />
+        <small style={{ color: "#666", fontSize: "12px" }}>
+          Enter the year for this paper (e.g., 2023 for 2023 board paper)
+        </small>
+      </div>
       <input
         type="file"
         accept="application/pdf"
@@ -146,10 +190,25 @@ export default function PDFUploader() {
       <button onClick={handleUpload} style={uploadBtnStyle} disabled={uploading || !file}>
         {uploading ? "Uploading..." : "Upload PDF"}
       </button>
+      
+      {/* Upload Message */}
+      {uploadMessage && (
+        <div style={{ 
+          marginTop: 16, 
+          padding: 12, 
+          borderRadius: 8,
+          backgroundColor: uploadMessage.includes('✅') ? '#d4edda' : '#f8d7da',
+          color: uploadMessage.includes('✅') ? '#155724' : '#721c24',
+          border: `1px solid ${uploadMessage.includes('✅') ? '#c3e6cb' : '#f5c6cb'}`
+        }}>
+          {uploadMessage}
+        </div>
+      )}
+      
       {fileUrl && (
         <div style={{ marginTop: 30 }}>
           <h4 style={{ color: "#0057b8" }}>✅ Uploaded Successfully!</h4>
-          <a href={fileUrl} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: "#22a6f1" }}>View in new tab</a>
+          <a href={fileUrl} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: "#22a6b1" }}>View in new tab</a>
           <iframe
             src={fileUrl + "#toolbar=0"}
             width="100%"

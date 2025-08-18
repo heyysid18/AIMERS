@@ -1,8 +1,17 @@
 import axios from 'axios';
 
+// Dynamic API URL - works both locally and on Render
+const getApiUrl = () => {
+  if (window.location.hostname === 'localhost') {
+    return 'http://localhost:5000/api';
+  } else {
+    return 'https://aimers-backend-clv3.onrender.com/api';
+  }
+};
+
 // Create an axios instance with base configuration
 const API = axios.create({
-  baseURL: 'https://aimers-backend-clv3.onrender.com/api',
+  baseURL: getApiUrl(),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

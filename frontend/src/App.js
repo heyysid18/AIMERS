@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -25,6 +25,19 @@ import ResetPassword from "./pages/ResetPassword";
 
 function AppLayout() {
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -41,7 +54,7 @@ function AppLayout() {
   );
 
   return (
-    <>
+    <div className={`app-container ${isMobile ? 'mobile' : 'desktop'}`}>
       <Header />
 
       <Routes>
@@ -102,7 +115,7 @@ function AppLayout() {
       </Routes>
 
       {!hideFooter && <Footer />}
-    </>
+    </div>
   );
 }
 

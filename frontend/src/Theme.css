@@ -5340,7 +5340,6 @@ a:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow);
   color: white;
-  text-decoration: none;
 }
 
 /* Responsive Design for DPP and Papers */
@@ -5769,18 +5768,14 @@ a:hover {
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border: 3px solid rgba(255, 255, 255, 0.1);
   border-top: 3px solid var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .loading-container p {
   color: var(--text-secondary);
@@ -7386,4 +7381,732 @@ a:hover {
 
 @media (max-width: 768px) {
   .compact-dpp-viewer .content-header { flex-direction: column; align-items: flex-start; }
+}
+
+/* ============================
+   COMPREHENSIVE MOBILE RESPONSIVENESS
+   ============================ */
+
+/* Mobile-First Responsive Design */
+@media (max-width: 768px) {
+  /* Global Mobile Styles */
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  h1 { font-size: 2rem !important; }
+  h2 { font-size: 1.75rem !important; }
+  h3 { font-size: 1.5rem !important; }
+  h4 { font-size: 1.25rem !important; }
+  h5 { font-size: 1.125rem !important; }
+
+  /* Container and Layout */
+  .container, .section-container {
+    padding: 1rem !important;
+    margin: 0 !important;
+  }
+
+  .section {
+    padding: 2rem 1rem !important;
+  }
+
+  /* Header Mobile Optimization */
+  .premium-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+  }
+
+  .premium-header .header-container {
+    padding: 0 1rem !important;
+    height: 70px !important;
+    gap: 0.75rem !important;
+  }
+
+  .premium-header .logo {
+    min-width: 120px !important;
+  }
+
+  .premium-header .logo-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.125rem !important;
+  }
+
+  .premium-header .logo-text {
+    font-size: 1.25rem !important;
+  }
+
+  .premium-header .logo-tagline {
+    font-size: 0.5rem !important;
+  }
+
+  /* Mobile Menu */
+  .premium-header .nav-menu {
+    position: fixed !important;
+    top: 70px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: var(--background-card) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid var(--border) !important;
+    padding: 1rem !important;
+    transform: translateY(-100%) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    max-height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+  }
+
+  .premium-header .nav-menu.active {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .premium-header .nav-group {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .premium-header .nav-link {
+    width: 100% !important;
+    padding: 1rem !important;
+    border-radius: var(--radius) !important;
+    background: var(--background-elevated) !important;
+    justify-content: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .premium-header .nav-link:hover {
+    background: var(--primary) !important;
+    transform: none !important;
+  }
+
+  /* Mobile Menu Toggle */
+  .premium-header .mobile-menu-toggle {
+    display: block !important;
+    order: 3 !important;
+  }
+
+  .premium-header .header-actions {
+    gap: 0.5rem !important;
+    min-width: auto !important;
+  }
+
+  /* User Profile Mobile */
+  .premium-header .user-profile {
+    min-width: 100px !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .premium-header .user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .premium-header .user-name {
+    font-size: 0.75rem !important;
+  }
+
+  .premium-header .user-role {
+    font-size: 0.625rem !important;
+  }
+
+  /* User Menu Mobile */
+  .premium-header .user-menu {
+    position: fixed !important;
+    top: 70px !important;
+    right: 1rem !important;
+    left: 1rem !important;
+    max-width: none !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-xl) !important;
+  }
+
+  /* Auth Buttons Mobile */
+  .premium-header .login-button,
+  .premium-header .register-button {
+    padding: 0.75rem 1rem !important;
+    min-width: 100px !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Main Content Mobile */
+  .main-content {
+    margin-top: 70px !important;
+    padding: 1rem !important;
+  }
+
+  /* Hero Section Mobile */
+  .hero-section {
+    padding: 3rem 1rem !important;
+    text-align: center !important;
+  }
+
+  .hero-section .hero-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .hero-section .hero-title {
+    font-size: 2.5rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .hero-section .hero-subtitle {
+    font-size: 1.125rem !important;
+    margin-bottom: 2rem !important;
+  }
+
+  .hero-section .hero-buttons {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: center !important;
+  }
+
+  .hero-section .hero-button {
+    width: 100% !important;
+    max-width: 300px !important;
+    padding: 1rem 2rem !important;
+  }
+
+  /* Cards Mobile */
+  .card, .feature-card, .course-card, .dpp-card, .paper-card {
+    margin: 0.5rem 0 !important;
+    padding: 1.5rem !important;
+  }
+
+  .card-grid, .feature-grid, .course-grid, .dpp-grid, .paper-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 !important;
+  }
+
+  /* Forms Mobile */
+  .form-group {
+    margin-bottom: 1rem !important;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.875rem !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+
+  .form-row {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .form-row .form-group {
+    width: 100% !important;
+  }
+
+  /* Buttons Mobile */
+  .btn, .button {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    border-radius: var(--radius) !important;
+  }
+
+  .btn-group {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Auth Page Mobile */
+  .compact-auth {
+    padding: 1rem !important;
+  }
+
+  .auth-container {
+    min-height: calc(100vh - 140px) !important;
+  }
+
+  .auth-content {
+    flex-direction: column !important;
+    gap: 2rem !important;
+  }
+
+  .auth-left {
+    order: 2 !important;
+    text-align: center !important;
+  }
+
+  .auth-right {
+    order: 1 !important;
+  }
+
+  .auth-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 2rem 1.5rem !important;
+  }
+
+  .mode-tabs {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .mode-tab {
+    width: 100% !important;
+    padding: 1rem !important;
+  }
+
+  /* PDF Uploader Mobile */
+  .pdf-uploader {
+    padding: 1.5rem !important;
+  }
+
+  .pdf-uploader .upload-section {
+    gap: 1rem !important;
+  }
+
+  .pdf-uploader .dropdown-wrap {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .pdf-uploader .SelectBox {
+    width: 100% !important;
+  }
+
+  .pdf-uploader input[type="file"] {
+    width: 100% !important;
+  }
+
+  /* PDF Viewer Mobile */
+  .pdf-viewer {
+    height: 60vh !important;
+  }
+
+  .pdf-viewer .pdf-controls {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  .pdf-viewer .pdf-controls button {
+    width: 100% !important;
+  }
+
+  /* Tables Mobile */
+  .table-container {
+    overflow-x: auto !important;
+  }
+
+  .table {
+    min-width: 600px !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Footer Mobile */
+  .footer {
+    padding: 2rem 1rem !important;
+  }
+
+  .footer-content {
+    flex-direction: column !important;
+    gap: 2rem !important;
+    text-align: center !important;
+  }
+
+  .footer-section {
+    width: 100% !important;
+  }
+
+  /* Navigation Mobile */
+  .breadcrumb {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Search Mobile */
+  .search-container {
+    width: 100% !important;
+  }
+
+  .search-input {
+    width: 100% !important;
+    padding: 0.875rem !important;
+  }
+
+  /* Modal Mobile */
+  .modal {
+    padding: 1rem !important;
+  }
+
+  .modal-content {
+    width: 95% !important;
+    max-width: none !important;
+    margin: 1rem auto !important;
+    padding: 1.5rem !important;
+  }
+
+  .modal-header {
+    padding-bottom: 1rem !important;
+  }
+
+  .modal-body {
+    padding: 1rem 0 !important;
+  }
+
+  .modal-footer {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding-top: 1rem !important;
+  }
+
+  /* Tooltips Mobile */
+  .tooltip {
+    display: none !important; /* Hide tooltips on mobile */
+  }
+
+  /* Animations Mobile */
+  .fade-in, .slide-up, .scale-in {
+    animation: none !important; /* Disable complex animations on mobile */
+  }
+
+  /* Hover Effects Mobile */
+  .card:hover,
+  .feature-card:hover,
+  .course-card:hover,
+  .dpp-card:hover,
+  .paper-card:hover {
+    transform: none !important;
+    box-shadow: var(--shadow) !important;
+  }
+
+  /* Sidebar Mobile */
+  .sidebar {
+    position: fixed !important;
+    top: 70px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 999 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  /* Dashboard Mobile */
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .dashboard-card {
+    padding: 1.5rem !important;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Course Viewer Mobile */
+  .course-viewer {
+    flex-direction: column !important;
+  }
+
+  .course-sidebar {
+    width: 100% !important;
+    order: 2 !important;
+  }
+
+  .course-content {
+    width: 100% !important;
+    order: 1 !important;
+  }
+
+  /* Video Player Mobile */
+  .video-player {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16/9 !important;
+  }
+
+  /* Progress Bars Mobile */
+  .progress-bar {
+    height: 8px !important;
+  }
+
+  .progress-text {
+    font-size: 0.875rem !important;
+  }
+
+  /* Alerts Mobile */
+  .alert {
+    margin: 0.5rem 0 !important;
+    padding: 1rem !important;
+    border-radius: var(--radius) !important;
+  }
+
+  /* Loading States Mobile */
+  .loading-spinner {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* Empty States Mobile */
+  .empty-state {
+    padding: 2rem 1rem !important;
+    text-align: center !important;
+  }
+
+  .empty-state-icon {
+    font-size: 3rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .empty-state-description {
+    font-size: 1rem !important;
+  }
+}
+
+/* Extra Small Mobile Devices */
+@media (max-width: 480px) {
+  .premium-header .header-container {
+    padding: 0 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .premium-header .logo {
+    min-width: 100px !important;
+  }
+
+  .premium-header .logo-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
+  }
+
+  .premium-header .logo-text {
+    font-size: 1.125rem !important;
+  }
+
+  .premium-header .logo-tagline {
+    display: none !important;
+  }
+
+  .premium-header .user-profile {
+    min-width: 80px !important;
+    padding: 0.5rem !important;
+  }
+
+  .premium-header .user-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.625rem !important;
+  }
+
+  .premium-header .user-name {
+    font-size: 0.625rem !important;
+  }
+
+  .premium-header .user-role {
+    display: none !important;
+  }
+
+  .premium-header .login-button,
+  .premium-header .register-button {
+    padding: 0.625rem 0.875rem !important;
+    min-width: 80px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .section {
+    padding: 1.5rem 0.75rem !important;
+  }
+
+  .hero-section {
+    padding: 2rem 0.75rem !important;
+  }
+
+  .hero-section .hero-title {
+    font-size: 2rem !important;
+  }
+
+  .hero-section .hero-subtitle {
+    font-size: 1rem !important;
+  }
+
+  .card, .feature-card, .course-card, .dpp-card, .paper-card {
+    padding: 1rem !important;
+    margin: 0.25rem 0 !important;
+  }
+
+  .auth-card {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .pdf-uploader {
+    padding: 1rem !important;
+  }
+
+  .modal-content {
+    width: 98% !important;
+    margin: 0.5rem auto !important;
+    padding: 1rem !important;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .premium-header .nav-menu {
+    max-height: 60vh !important;
+  }
+
+  .hero-section {
+    padding: 2rem 1rem !important;
+  }
+
+  .hero-section .hero-title {
+    font-size: 2rem !important;
+  }
+
+  .hero-section .hero-subtitle {
+    font-size: 1rem !important;
+  }
+}
+
+/* High DPI Mobile Devices */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .premium-header .hamburger,
+  .premium-header .hamburger::before,
+  .premium-header .hamburger::after {
+    height: 1px !important;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover,
+  .button:hover,
+  .nav-link:hover,
+  .card:hover {
+    transform: none !important;
+    box-shadow: var(--shadow) !important;
+  }
+
+  .btn:active,
+  .button:active,
+  .nav-link:active,
+  .card:active {
+    transform: scale(0.98) !important;
+  }
+
+  /* Increase touch targets */
+  .nav-link,
+  .btn,
+  .button,
+  .mode-tab {
+    min-height: 44px !important;
+  }
+
+  .premium-header .mobile-menu-toggle {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .premium-header,
+  .footer,
+  .mobile-menu-toggle,
+  .user-menu {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-top: 0 !important;
+  }
+
+  .card,
+  .feature-card,
+  .course-card,
+  .dpp-card,
+  .paper-card {
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
+/* ============================
+   APP CONTAINER MOBILE STYLES
+   ============================ */
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-container.mobile {
+  /* Mobile-specific container styles */
+}
+
+.app-container.mobile .main-content {
+  margin-top: 70px !important;
+  padding: 0.5rem !important;
+}
+
+.app-container.mobile .section {
+  padding: 1.5rem 0.5rem !important;
+}
+
+.app-container.mobile .container {
+  padding: 0.5rem !important;
+}
+
+/* Mobile-specific utility classes */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: block !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Ensure proper spacing on mobile */
+  .app-container.mobile .main-content > * {
+    margin-bottom: 1rem !important;
+  }
+  
+  .app-container.mobile .main-content > *:last-child {
+    margin-bottom: 0 !important;
+  }
 }

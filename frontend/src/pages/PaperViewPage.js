@@ -6,40 +6,50 @@ export default function PaperViewPage() {
   const { class: paperClass, subject, year } = useParams();
   const navigate = useNavigate();
 
-  // Fix the subject folder name - convert to lowercase and handle spaces properly
-  const subjectFolder = subject?.toLowerCase().replace(/\s+/g, "");
-  const fileUrl = `http://localhost:5000/uploads/papers/${paperClass}/${subjectFolder}/${year}.pdf`;
+  // API base URL - Use localhost for local testing, Render URL for production
+  const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api'
+    : 'https://aimers-backend-clv3.onrender.com/api';
 
   const containerRef = useRef(null);
   const [fileExists, setFileExists] = useState(null); // null=loading, true=exists, false=missing
   const [error, setError] = useState(null);
+  const [paperData, setPaperData] = useState(null);
 
-  // Check if PDF exists before loading
+  // Check if paper exists in MongoDB before loading
   useEffect(() => {
     setFileExists(null);
     setError(null);
     
-    console.log('Checking file URL:', fileUrl);
-    
-    fetch(fileUrl, { 
-      method: "HEAD",
-      mode: 'cors'
-    })
-      .then((res) => {
-        console.log('PDF check response:', res.status, res.headers);
-        if (res.ok) {
+    const checkPaperAvailability = async () => {
+      try {
+        console.log('Checking paper availability for:', paperClass, subject, year);
+        
+        const response = await fetch(`${API_BASE_URL}/papers/check/${paperClass}/${subject.toLowerCase()}/${year}`);
+        const data = await response.json();
+        
+        console.log('Paper availability response:', data);
+        
+        if (data.available && data.paperId) {
           setFileExists(true);
+          setPaperData({
+            paperId: data.paperId,
+            filename: data.filename,
+            url: `${API_BASE_URL}/pdf/${data.paperId}`
+          });
         } else {
           setFileExists(false);
-          setError(`File not found (Status: ${res.status})`);
+          setError('Paper not found in database');
         }
-      })
-      .catch((error) => {
-        console.error('PDF check error:', error);
+      } catch (error) {
+        console.error('Paper check error:', error);
         setFileExists(false);
         setError(`Network error: ${error.message}`);
-      });
-  }, [fileUrl]);
+      }
+    };
+
+    checkPaperAvailability();
+  }, [paperClass, subject, year, API_BASE_URL]);
 
   // Disable right click and keyboard shortcuts
   useEffect(() => {
@@ -111,7 +121,7 @@ export default function PaperViewPage() {
         ) : (
           <div className="pdf-viewer-container">
             <PDFViewer 
-              fileUrl={fileUrl} 
+              fileUrl={paperData.url} 
               title={`${subject} Board Paper ${year}`}
             />
           </div>

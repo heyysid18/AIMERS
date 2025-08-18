@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 
-// API base URL
-const API_BASE_URL = 'http://localhost:5000/api';
+// API base URL - Use localhost for local testing, Render URL for production
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://aimers-backend-clv3.onrender.com/api';
 
 // Available subjects (matching backend folder structure)
 const subjectsByClass = {
