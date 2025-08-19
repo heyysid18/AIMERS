@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../Theme.css';
 
 // Constants
 const TYPES = [
@@ -26,7 +27,7 @@ function capitalize(str) {
 // SelectBox for concise usage below
 function SelectBox({ label, value, setValue, options }) {
   return (
-    <select value={value} onChange={e => setValue(e.target.value)} style={selectStyle}>
+    <select value={value} onChange={e => setValue(e.target.value)} className="upload-select">
       <option value="">Select {label}</option>
       {options.map(opt => (
         <option key={opt.value || opt} value={opt.value || opt}>
@@ -60,8 +61,8 @@ export default function PDFUploader() {
   const [dppSubject, setDppSubject] = useState("mathematics");
   const [dppTitle, setDppTitle] = useState("");
   const [dppContent, setDppContent] = useState("");
-  const [dppDate, setDppDate] = useState(new Date().toISOString().split('T')[0]);
   const [dppSuccess, setDppSuccess] = useState(false);
+  const [dppTopic, setDppTopic] = useState("");
 
   const resetForm = () => {
     setFile(null);
@@ -74,7 +75,7 @@ export default function PDFUploader() {
     setVideoSuccess(false);
     setDppTitle("");
     setDppContent("");
-    setDppDate(new Date().toISOString().split('T')[0]);
+    setDppTopic("");
     setDppSuccess(false);
   };
 
@@ -120,40 +121,55 @@ export default function PDFUploader() {
   // Handle Video Topic Upload
   const handleVideoUpload = async () => {
     if (!videoTopic || !videoUrl) {
-      alert("Please enter both topic and video link.");
+      alert("Please enter topic name and video link.");
       return;
     }
     
     try {
+      console.log('Starting video upload...');
+      console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('Sending video upload request:', {
+        className: videoClass,
+        subject: videoSubject,
+        topic: videoTopic,
+        url: videoUrl
+      });
+      
       const response = await axios.post(`${API_BASE_URL}/upload/video`, {
         className: videoClass,
         subject: videoSubject,
         topic: videoTopic,
         url: videoUrl,
       });
+      
+      console.log('Video upload response:', response.data);
       setVideoSuccess(true);
       setVideoTopic("");
       setVideoUrl("");
-    } catch {
-      alert("❌ Failed to upload video link.");
+    } catch (error) {
+      console.error('Video upload error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
+      alert(`❌ Failed to upload video link: ${errorMessage}`);
     }
   };
 
   // Handle Text DPP Upload
   const handleDppUpload = async () => {
-    if (!dppTitle || !dppContent || !dppDate) return alert("Please enter title, content, and date.");
+    if (!dppTitle || !dppContent || !dppTopic) return alert("Please fill all DPP fields.");
     try {
       await axios.post(`${API_BASE_URL}/upload/dpp`, {
         className: dppClass,
         subject: dppSubject,
         title: dppTitle,
         content: dppContent,
-        date: dppDate,
+        topic: dppTopic
       });
       setDppSuccess(true);
       setDppTitle("");
       setDppContent("");
-      setDppDate(new Date().toISOString().split('T')[0]);
+      setDppTopic("");
     } catch {
       alert("❌ Failed to upload DPP.");
     }
@@ -161,191 +177,212 @@ export default function PDFUploader() {
 
   // --- UI ---
   return (
-    <div style={containerStyle}>
-      {/* PDF Upload Section */}
-      <h2 style={{ color: "#004aad", fontWeight: 900, marginBottom: 20 }}>📤 Upload PDF</h2>
-      <div style={dropdownWrap}>
-        <SelectBox label="Type" value={fileType} setValue={setFileType} options={TYPES} />
-        <SelectBox label="Class" value={className} setValue={setClassName} options={CLASSES.map(e => ({ label: e, value: e }))} />
-        <SelectBox label="Subject" value={subject} setValue={setSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
-      </div>
-      <div style={{ marginBottom: 16 }}>
-        <input
-          type="text"
-          placeholder="Year (e.g., 2023)"
-          value={year}
-          onChange={e => setYear(e.target.value)}
-          style={{ ...selectStyle, width: "100%", maxWidth: "200px" }}
-        />
-        <small style={{ color: "#666", fontSize: "12px" }}>
-          Enter the year for this paper (e.g., 2023 for 2023 board paper)
-        </small>
-      </div>
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={e => { setFile(e.target.files[0]); setFileUrl(""); }}
-        style={{ margin: "16px 0" }}
-      />
-      <button onClick={handleUpload} style={uploadBtnStyle} disabled={uploading || !file}>
-        {uploading ? "Uploading..." : "Upload PDF"}
-      </button>
-      
-      {/* Upload Message */}
-      {uploadMessage && (
-        <div style={{ 
-          marginTop: 16, 
-          padding: 12, 
-          borderRadius: 8,
-          backgroundColor: uploadMessage.includes('✅') ? '#d4edda' : '#f8d7da',
-          color: uploadMessage.includes('✅') ? '#155724' : '#721c24',
-          border: `1px solid ${uploadMessage.includes('✅') ? '#c3e6cb' : '#f5c6cb'}`
-        }}>
-          {uploadMessage}
+    <div className="upload-page">
+      <div className="upload-container">
+        {/* Hero Section */}
+        <div className="upload-hero">
+          <div className="hero-badge">
+            <span className="badge-icon">📤</span>
+            <span className="badge-text">Content Upload</span>
+          </div>
+          <h1 className="hero-title">
+            Upload <span className="gradient-text">Content</span>
+          </h1>
+          <p className="hero-subtitle">
+            Upload PDFs, video topics, and text DPPs to expand our educational resources
+          </p>
         </div>
-      )}
-      
-      {fileUrl && (
-        <div style={{ marginTop: 30 }}>
-          <h4 style={{ color: "#0057b8" }}>✅ Uploaded Successfully!</h4>
-          <a href={fileUrl} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: "#22a6b1" }}>View in new tab</a>
-          <iframe
-            src={fileUrl + "#toolbar=0"}
-            width="100%"
-            height="400px"
-            title="Uploaded PDF Preview"
-            style={iframeStyle}
-          />
+
+        {/* PDF Upload Section */}
+        <div className="upload-section">
+          <div className="section-header">
+            <div className="section-icon">📄</div>
+            <h2>PDF Upload</h2>
+            <p>Upload DPPs and Board Papers for students</p>
+          </div>
+          
+          <div className="upload-form">
+            <div className="form-row">
+              <SelectBox label="Type" value={fileType} setValue={setFileType} options={TYPES} />
+              <SelectBox label="Class" value={className} setValue={setClassName} options={CLASSES.map(e => ({ label: e, value: e }))} />
+              <SelectBox label="Subject" value={subject} setValue={setSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
+            </div>
+            
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Year (e.g., 2023)"
+                value={year}
+                onChange={e => setYear(e.target.value)}
+                className="upload-input"
+              />
+              <small className="input-help">
+                Enter the year for this paper (e.g., 2023 for 2023 board paper)
+              </small>
+            </div>
+            
+            <div className="file-upload-area">
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={e => { setFile(e.target.files[0]); setFileUrl(""); }}
+                className="file-input"
+                id="pdf-file"
+              />
+              <label htmlFor="pdf-file" className="file-label">
+                <span className="file-icon">📁</span>
+                <span className="file-text">
+                  {file ? file.name : "Choose PDF file or drag and drop"}
+                </span>
+              </label>
+            </div>
+            
+            <button onClick={handleUpload} className="upload-btn primary" disabled={uploading || !file}>
+              {uploading ? "Uploading..." : "Upload PDF"}
+            </button>
+          </div>
+          
+          {/* Upload Message */}
+          {uploadMessage && (
+            <div className={`upload-message ${uploadMessage.includes('✅') ? 'success' : 'error'}`}>
+              {uploadMessage}
+            </div>
+          )}
+          
+          {fileUrl && (
+            <div className="upload-success">
+              <h4>✅ Uploaded Successfully!</h4>
+              <a href={fileUrl} target="_blank" rel="noreferrer" className="view-link">View in new tab</a>
+              <iframe
+                src={fileUrl + "#toolbar=0"}
+                width="100%"
+                height="400px"
+                title="Uploaded PDF Preview"
+                className="pdf-preview"
+              />
+            </div>
+          )}
         </div>
-      )}
 
-      {/* VIDEO TOPIC SECTION */}
-      <hr style={{ margin: '44px 0 28px 0', borderTop: '1px dashed #ccc' }} />
-      <h2 style={{ color: "#004aad", fontWeight: 900, marginBottom: 16 }}>🎥 Upload Course Video Topic</h2>
-      <div style={{ ...dropdownWrap, marginBottom: 16 }}>
-        <SelectBox label="Class" value={videoClass} setValue={setVideoClass} options={CLASSES.map(e => ({ label: e, value: e }))} />
-        <SelectBox label="Subject" value={videoSubject} setValue={setVideoSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
-      </div>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
-        <input
-          type="text"
-          placeholder="Topic name"
-          value={videoTopic}
-          onChange={e => setVideoTopic(e.target.value)}
-          style={{ ...selectStyle, width: "240px" }}
-        />
-        <input
-          type="url"
-          placeholder="YouTube Video Link"
-          value={videoUrl}
-          onChange={e => setVideoUrl(e.target.value)}
-          style={{ ...selectStyle, width: "280px" }}
-        />
-      </div>
-      <button
-        onClick={handleVideoUpload}
-        style={{ ...uploadBtnStyle, background: "#00c897" }}
-        disabled={!videoTopic || !videoUrl}
-      >
-        Upload Video Link
-      </button>
-      {videoSuccess && (
-        <p style={{ color: "#00aa55", marginTop: 16 }}>
-          ✅ Video has been uploaded. It will appear in the Courses Page under Grade {videoClass} &rarr; {capitalize(videoSubject)}.
-        </p>
-      )}
-
-      {/* TEXT DPP SECTION */}
-      <hr style={{ margin: '44px 0 28px 0', borderTop: '1px dashed #ccc' }} />
-      <h2 style={{ color: "#004aad", fontWeight: 900, marginBottom: 16 }}>📝 Upload Text DPP</h2>
-      <div style={{ ...dropdownWrap, marginBottom: 16 }}>
-        <SelectBox label="Class" value={dppClass} setValue={setDppClass} options={CLASSES.map(e => ({ label: e, value: e }))} />
-        <SelectBox label="Subject" value={dppSubject} setValue={setDppSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18 }}>
-        <input
-          type="text"
-          placeholder="DPP Title (e.g., Day 1: Quadratic Equations)"
-          value={dppTitle}
-          onChange={e => setDppTitle(e.target.value)}
-          style={{ ...selectStyle, width: "100%" }}
-        />
-        <input
-          type="date"
-          value={dppDate}
-          onChange={e => setDppDate(e.target.value)}
-          style={{ ...selectStyle, width: "100%" }}
-        />
-        <textarea
-          placeholder="Enter DPP content here... (Questions, problems, etc.)"
-          value={dppContent}
-          onChange={e => setDppContent(e.target.value)}
-          style={{ ...selectStyle, width: "100%", minHeight: "120px", resize: "vertical", fontFamily: "inherit" }}
-        />
-      </div>
-      <button
-        onClick={handleDppUpload}
-        style={{ ...uploadBtnStyle, background: "#ff6b35" }}
-        disabled={!dppTitle || !dppContent || !dppDate}
-      >
-        Upload Text DPP
-      </button>
-      {dppSuccess && (
-        <p style={{ color: "#00aa55", marginTop: 16 }}>
-          ✅ Text DPP has been uploaded. It will appear in the DPPs section under Grade {dppClass} &rarr; {capitalize(dppSubject)}.
-        </p>
-      )}
-
-      {(fileUrl || videoSuccess || dppSuccess) && (
-        <div style={{ marginTop: 40 }}>
-          <button onClick={resetForm} style={{ ...uploadBtnStyle, background: "#cfe8fa", color: "#004aad" }}>
-            Upload Another
-          </button>
+        {/* VIDEO TOPIC SECTION */}
+        <div className="upload-section">
+          <div className="section-header">
+            <div className="section-icon">🎥</div>
+            <h2>Video Topic Upload</h2>
+            <p>Add video topics to the course content</p>
+          </div>
+          
+          <div className="upload-form">
+            <div className="form-row">
+              <SelectBox label="Class" value={videoClass} setValue={setVideoClass} options={CLASSES.map(e => ({ label: e, value: e }))} />
+              <SelectBox label="videoSubject" setValue={setVideoSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
+            </div>
+            
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Topic name (e.g., Differentiation, Integration)"
+                value={videoTopic}
+                onChange={e => setVideoTopic(e.target.value)}
+                className="upload-input"
+              />
+            </div>
+            
+            <div className="form-group">
+              <input
+                type="url"
+                placeholder="YouTube Video Link"
+                value={videoUrl}
+                onChange={e => setVideoUrl(e.target.value)}
+                className="upload-input"
+              />
+            </div>
+            
+            <button
+              onClick={handleVideoUpload}
+              className="upload-btn success"
+              disabled={!videoTopic || !videoUrl}
+            >
+              Upload Video Link
+            </button>
+            
+            {videoSuccess && (
+              <div className="success-message">
+                ✅ Video has been uploaded. It will appear in the Courses Page under Grade {videoClass} → {capitalize(videoSubject)} → {videoTopic}.
+              </div>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* TEXT DPP SECTION */}
+        <div className="upload-section">
+          <div className="section-header">
+            <div className="section-icon">📝</div>
+            <h2>Text DPP Upload</h2>
+            <p>Create and upload text-based DPPs</p>
+          </div>
+          
+          <div className="upload-form">
+            <div className="form-row">
+              <SelectBox label="Class" value={dppClass} setValue={setDppClass} options={CLASSES.map(e => ({ label: e, value: e }))} />
+              <SelectBox label="Subject" value={dppSubject} setValue={setDppSubject} options={SUBJECTS.map(sub => ({ label: capitalize(sub), value: sub }))} />
+            </div>
+            
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="DPP Title (e.g., Day 1: Quadratic Equations)"
+                value={dppTitle}
+                onChange={e => setDppTitle(e.target.value)}
+                className="upload-input"
+              />
+            </div>
+            
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Topic (e.g., Algebra, Geometry, Trigonometry)"
+                value={dppTopic}
+                onChange={e => setDppTopic(e.target.value)}
+                className="upload-input"
+              />
+            </div>
+            
+            <div className="form-group">
+              <textarea
+                placeholder="Enter DPP content here... (Questions, problems, etc.)"
+                value={dppContent}
+                onChange={e => setDppContent(e.target.value)}
+                className="upload-textarea"
+                rows="6"
+              />
+            </div>
+            
+            <button
+              onClick={handleDppUpload}
+              className="upload-btn warning"
+              disabled={!dppTitle || !dppContent || !dppTopic}
+            >
+              Upload Text DPP
+            </button>
+            
+            {dppSuccess && (
+              <div className="success-message">
+                ✅ Text DPP has been uploaded. It will appear in the DPPs section under Grade {dppClass} → {capitalize(dppSubject)} → {dppTopic}.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Reset Form */}
+        {(fileUrl || videoSuccess || dppSuccess) && (
+          <div className="upload-actions">
+            <button onClick={resetForm} className="upload-btn outline">
+              Upload Another
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-// --- STYLES ---
-const containerStyle = {
-  maxWidth: 540,
-  margin: "48px auto",
-  background: "#fff",
-  borderRadius: 18,
-  boxShadow: "0 4px 30px #22a6f11a",
-  padding: 36,
-  textAlign: "center"
-};
-const selectStyle = {
-  padding: "9px 22px",
-  border: "2px solid #cfd9f2",
-  borderRadius: "8px",
-  fontWeight: 600,
-  fontSize: "1.02em",
-  color: "#003366"
-};
-const dropdownWrap = {
-  marginBottom: 18,
-  display: "flex",
-  gap: 12,
-  justifyContent: "center",
-  flexWrap: "wrap"
-};
-const uploadBtnStyle = {
-  padding: "11px 32px",
-  background: "#22a6f1",
-  color: "#fff",
-  fontWeight: 800,
-  fontSize: "1.08em",
-  border: "none",
-  borderRadius: "13px",
-  boxShadow: "0 1.5px 7px #22a6f131",
-  cursor: "pointer"
-};
-const iframeStyle = {
-  margin: "18px 0",
-  border: "1.8px solid #22a6f1",
-  borderRadius: "10px",
-  boxShadow: "0 2px 15px #22a6f122"
-};

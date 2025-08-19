@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 const VideoPlayer = ({ videoUrl, title }) => {
+  const [linkHover, setLinkHover] = useState(false);
 
   // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url) => {
@@ -15,7 +16,14 @@ const VideoPlayer = ({ videoUrl, title }) => {
     return (
       <div style={errorStyle}>
         <p>❌ Invalid YouTube URL</p>
-        <a href={videoUrl} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+        <a 
+          href={videoUrl} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={linkHover ? linkHoverStyle : linkStyle}
+          onMouseEnter={() => setLinkHover(true)}
+          onMouseLeave={() => setLinkHover(false)}
+        >
           Open in YouTube
         </a>
       </div>
@@ -40,16 +48,20 @@ const VideoPlayer = ({ videoUrl, title }) => {
   );
 };
 
-// Styles
+// Styles - Updated to match website theme
 const containerStyle = {
-  maxWidth: '900px',
+  maxWidth: '100%',
   width: '100%',
-  margin: '20px auto',
-  padding: '25px',
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 4px 20px rgba(34, 166, 241, 0.15)',
-  border: '1px solid #e6eef5'
+  margin: '0',
+  padding: '10px',
+  backgroundColor: 'transparent',
+  borderRadius: '0',
+  boxShadow: 'none',
+  border: 'none',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center'
 };
 
 const titleStyle = {
@@ -63,8 +75,12 @@ const titleStyle = {
 const videoContainerStyle = {
   position: 'relative',
   width: '100%',
-  height: '350px',
-  marginBottom: '18px'
+  height: '0',
+  paddingBottom: '50%', // Reduced from 56.25% to make video shorter
+  marginBottom: '0',
+  borderRadius: '16px',
+  overflow: 'hidden',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3)'
 };
 
 const iframeStyle = {
@@ -73,8 +89,9 @@ const iframeStyle = {
   left: 0,
   width: '100%',
   height: '100%',
-  borderRadius: '8px',
-  border: 'none'
+  borderRadius: '16px',
+  border: 'none',
+  objectFit: 'cover'
 };
 
 const controlsStyle = {
@@ -96,23 +113,34 @@ const buttonStyle = {
 };
 
 const linkStyle = {
-  padding: '8px 16px',
-  backgroundColor: '#f8f9fa',
-  color: '#004aad',
+  padding: '12px 20px',
+  background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.9) 0%, rgba(99, 102, 241, 0.9) 100%)',
+  color: '#ffffff',
   textDecoration: 'none',
-  borderRadius: '6px',
+  borderRadius: '12px',
   fontWeight: '600',
   fontSize: '0.9em',
-  border: '1px solid #dee2e6'
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  boxShadow: '0 4px 16px rgba(79, 70, 229, 0.4)',
+  cursor: 'pointer'
+};
+
+const linkHoverStyle = {
+  ...linkStyle,
+  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(79, 70, 229, 0.95) 100%)',
+  transform: 'translateY(-2px)',
+  boxShadow: '0 8px 24px rgba(79, 70, 229, 0.6)'
 };
 
 const errorStyle = {
   textAlign: 'center',
-  padding: '20px',
-  color: '#dc3545',
-  backgroundColor: '#f8d7da',
-  borderRadius: '8px',
-  border: '1px solid #f5c6cb'
+  padding: '30px',
+  color: '#ef4444',
+  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  borderRadius: '16px',
+  border: '1px solid rgba(239, 68, 68, 0.3)',
+  backdropFilter: 'blur(10px)'
 };
 
 export default VideoPlayer; 

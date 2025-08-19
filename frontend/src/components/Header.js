@@ -11,6 +11,38 @@ function AuthButton() {
     setShowUserMenu(false);
   };
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest('.user-profile-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && showUserMenu) {
+        setShowUserMenu(false);
+      }
+    };
+
+    // Close menu on window resize to prevent layout issues
+    const handleResize = () => {
+      if (showUserMenu) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [showUserMenu]);
+
   return token ? (
     <div className="user-section">
       <div className="user-profile-container">
@@ -18,6 +50,8 @@ function AuthButton() {
           className="user-profile"
           onClick={() => setShowUserMenu(!showUserMenu)}
           aria-label="User menu"
+          aria-expanded={showUserMenu}
+          aria-haspopup="true"
         >
           <div className="user-avatar">
             <i className="fas fa-user-graduate"></i>
@@ -27,12 +61,16 @@ function AuthButton() {
             <span className="user-role">Student</span>
           </div>
           <div className="user-dropdown">
-            <i className={`fas fa-chevron-down ${showUserMenu ? 'rotated' : ''}`}></i>
+            <i className={`fas fa-caret-down ${showUserMenu ? 'rotated' : ''}`}></i>
           </div>
         </button>
 
         {showUserMenu && (
-          <div className="user-menu">
+          <div 
+            className="user-menu"
+            role="menu"
+            aria-label="User menu"
+          >
             <div className="user-menu-header">
               <div className="user-avatar-large">
                 <i className="fas fa-user-graduate"></i>
@@ -44,24 +82,24 @@ function AuthButton() {
             </div>
             
             <div className="user-menu-items">
-              <Link to="/my-account" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
+              <Link to="/my-account" className="user-menu-item" onClick={() => setShowUserMenu(false)} role="menuitem">
                 <i className="fas fa-user"></i>
                 <span>My Account</span>
               </Link>
-              <Link to="/upload" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
+              <Link to="/upload" className="user-menu-item" onClick={() => setShowUserMenu(false)} role="menuitem">
                 <i className="fas fa-upload"></i>
                 <span>Upload Content</span>
               </Link>
-              <Link to="/settings" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
+              <Link to="/settings" className="user-menu-item" onClick={() => setShowUserMenu(false)} role="menuitem">
                 <i className="fas fa-cog"></i>
                 <span>Settings</span>
               </Link>
-              <Link to="/help" className="user-menu-item" onClick={() => setShowUserMenu(false)}>
+              <Link to="/help" className="user-menu-item" onClick={() => setShowUserMenu(false)} role="menuitem">
                 <i className="fas fa-question-circle"></i>
                 <span>Help & Support</span>
               </Link>
               <div className="user-menu-divider"></div>
-              <button className="user-menu-item logout-btn" onClick={handleLogout}>
+              <button className="user-menu-item logout-btn" onClick={handleLogout} role="menuitem">
                 <i className="fas fa-sign-out-alt"></i>
                 <span>Sign Out</span>
               </button>

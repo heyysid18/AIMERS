@@ -191,30 +191,77 @@ app.get('/api/pdf/:paperId', async (req, res) => {
   }
 });
 
+// Add logging middleware for uploads
+app.use('/uploads', (req, res, next) => {
+  console.log('📁 Upload request:', req.method, req.url);
+  next();
+});
+
+// ============================
+// 3. Routes
+// ============================
+
+const Course = require('./models/Course');
+const DPP = require('./models/DPP');
+const authRoutes = require('./routes/authRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const dppRoutes = require('./routes/dppRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const testRoutes = require('./routes/testRoutes');
+const paperRoutes = require('./routes/paperRoutes');
+
 // ✅ Video Topic Upload Route
 app.post('/api/upload/video', async (req, res) => {
   const { className, subject, topic, url } = req.body;
 
+  console.log('Video upload request:', { className, subject, topic, url });
+
   if (!className || !subject || !topic || !url) {
-    return res.status(400).json({ error: 'All fields are required.' });
+    console.log('Missing required fields:', { className, subject, topic, url });
+    return res.status(400).json({ error: 'Topic name and video URL are required.' });
   }
 
   try {
-    let course = await Course.findOne({ grade: parseInt(className.replace('th', '')), subject });
+    const grade = parseInt(className.replace('th', ''));
+    console.log('Parsed grade:', grade);
+    
+    let course = await Course.findOne({ grade, subject: subject.toLowerCase() });
+    console.log('Found existing course:', course ? 'yes' : 'no');
 
     if (!course) {
+      console.log('Creating new course for grade:', grade, 'subject:', subject);
       course = new Course({
         title: `${subject} - Grade ${className}`,
-        grade: parseInt(className.replace('th', '')),
-        subject,
+        grade,
+        subject: subject.toLowerCase(),
         description: `${subject} course for Grade ${className}`,
         videoTopics: []
       });
     }
 
     if (!course.videoTopics) course.videoTopics = [];
-    course.videoTopics.push({ topic, url });
+    
+    // Check if topic already exists
+    const existingTopicIndex = course.videoTopics.findIndex(t => t.topic === topic);
+    if (existingTopicIndex !== -1) {
+      console.log('Updating existing topic:', topic);
+      // Update existing topic
+      course.videoTopics[existingTopicIndex] = { 
+        topic, 
+        url
+      };
+    } else {
+      console.log('Adding new topic:', topic);
+      // Add new topic
+      course.videoTopics.push({ 
+        topic, 
+        url
+      });
+    }
+    
+    console.log('Saving course with videoTopics:', course.videoTopics);
     await course.save();
+    console.log('Course saved successfully');
 
     res.status(200).json({
       success: true,
@@ -223,7 +270,11 @@ app.post('/api/upload/video', async (req, res) => {
     });
   } catch (err) {
     console.error('Error saving video topic:', err);
-    res.status(500).json({ error: 'Failed to save video topic.' });
+    console.error('Error details:', err.message);
+    if (err.errors) {
+      console.error('Validation errors:', err.errors);
+    }
+    res.status(500).json({ error: 'Failed to save video topic: ' + err.message });
   }
 });
 
@@ -250,25 +301,35 @@ app.get('/api/videos/:grade/:subject', async (req, res) => {
 
 // ✅ Text DPP Upload Route
 app.post('/api/upload/dpp', async (req, res) => {
-  const { className, subject, title, content, date } = req.body;
+  const { 
+    className, 
+    subject, 
+    title, 
+    content, 
+    topic
+  } = req.body;
 
-  if (!className || !subject || !title || !content || !date) {
-    return res.status(400).json({ error: 'All fields are required.' });
+  if (!className || !subject || !title || !content || !topic) {
+    return res.status(400).json({ error: 'className, subject, title, content, and topic are required.' });
   }
 
   try {
     const grade = parseInt(className.replace('th', ''));
-    const dppDate = new Date(date);
-    if (isNaN(dppDate.getTime())) {
-      return res.status(400).json({ error: 'Invalid date format.' });
-    }
+    const dppDate = new Date();
 
     const newDpp = new DPP({
       title,
       content,
       date: dppDate,
       grade,
-      subject: subject.toLowerCase()
+      subject: subject.toLowerCase(),
+      topic: topic,
+      // Set default values for required fields
+      dppNumber: 1,
+      questionCount: 10,
+      timeLimit: 30,
+      difficulty: 'Medium',
+      description: ''
     });
 
     await newDpp.save();
@@ -276,7 +337,14 @@ app.post('/api/upload/dpp', async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Text DPP uploaded successfully.',
-      data: { className, subject, title, content, date: dppDate }
+      data: { 
+        className, 
+        subject, 
+        title, 
+        content, 
+        date: dppDate,
+        topic: newDpp.topic
+      }
     });
   } catch (err) {
     console.error('Error saving text DPP:', err);
@@ -284,26 +352,11 @@ app.post('/api/upload/dpp', async (req, res) => {
   }
 });
 
+// DPP routes are now handled by dppRoutes.js
 
+// DPP routes are now handled by dppRoutes.js
 
-// Add logging middleware for uploads
-app.use('/uploads', (req, res, next) => {
-  console.log('📁 Upload request:', req.method, req.url);
-  next();
-});
-
-// ============================
-// 3. Routes
-// ============================
-
-const Course = require('./models/Course');
-const DPP = require('./models/DPP');
-const authRoutes = require('./routes/authRoutes');
-const courseRoutes = require('./routes/courseRoutes');
-const dppRoutes = require('./routes/dppRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const testRoutes = require('./routes/testRoutes');
-const paperRoutes = require('./routes/paperRoutes');
+// DPP routes are now handled by dppRoutes.js
 
 app.use('/api/user', authRoutes);
 app.use('/api/auth', authRoutes);
@@ -336,6 +389,22 @@ app.post('/api/test-register', (req, res) => {
     message: 'Test endpoint working',
     receivedData: req.body 
   });
+});
+
+// Test Course model endpoint
+app.get('/api/test-course-model', async (req, res) => {
+  try {
+    const courseCount = await Course.countDocuments();
+    res.json({ 
+      success: true, 
+      message: 'Course model is working',
+      courseCount: courseCount,
+      modelName: Course.modelName
+    });
+  } catch (err) {
+    console.error('Course model test error:', err);
+    res.status(500).json({ error: 'Course model test failed: ' + err.message });
+  }
 });
 
 // ✅ Video Topic Upload Route

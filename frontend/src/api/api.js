@@ -43,6 +43,7 @@ export const resetPassword = (payload) => API.post('/auth/reset-password', paylo
 /* ========== COURSES ========== */
 export const fetchCourses = () => API.get('/courses');
 export const fetchCourseById = (id) => API.get(`/courses/${id}`);
+export const fetchVideoTopics = (grade, subject) => API.get(`/videos/${grade}/${subject}`);
 
 /* ========== DPPs ========== */
 export const fetchDPPs = () => API.get('/dpps');
@@ -52,6 +53,12 @@ export const submitMyDPP = (formData) => API.post('/dpps/submit', formData);
 /* ========== LECTURES ========== */
 export const fetchLectures = () => API.get('/lectures');
 export const fetchLectureById = (id) => API.get(`/lectures/${id}`);
+
+/* ========== DASHBOARD & PROGRESS ========== */
+export const fetchCompletionStatus = (grade, subject) => API.get(`/dashboard/completion-status/${grade}/${subject}`);
+export const trackVideoProgress = (data) => API.post('/dashboard/track-video', data);
+export const trackDPPProgress = (data) => API.post('/dashboard/track-dpp', data);
+export const trackPaperProgress = (data) => API.post('/dashboard/track-paper', data);
 
 /* ========== PREVIOUS YEAR PAPERS ========== */
 export const fetchPapers = () => API.get('/papers');
